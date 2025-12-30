@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Virtual - Klik dan Mainkan!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin-bottom: 30px;
+        }
+        
+        .piano-container {
+            background: #000;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .keyboard {
+            display: flex;
+            position: relative;
+            height: 250px;
+            user-select: none;
+        }
+        
+        .white-keys {
+            display: flex;
+            flex: 1;
+        }
+        
+        .white-key {
+            flex: 1;
+            background: linear-gradient(to bottom, #fff 0%, #f0f0f0 100%);
+            border: 1px solid #ccc;
+            border-radius: 0 0 10px 10px;
+            margin: 0 2px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: all 0.1s;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .white-key.active {
+            background: linear-gradient(to bottom, #ffeb3b 0%, #fbc02d 100%);
+            transform: translateY(5px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .white-key .label {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .black-keys {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            display: flex;
+            pointer-events: none;
+        }
+        
+        .black-key {
+            width: 7%;
+            height: 100%;
+            background: linear-gradient(to bottom, #333 0%, #000 100%);
+            border-radius: 0 0 8px 8px;
+            margin-left: 4.5%;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            pointer-events: all;
+            transition: all 0.1s;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+        }
+        
+        .black-key.active {
+            background: linear-gradient(to bottom, #ff4081 0%, #c2185b 100%);
+            transform: translateY(3px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+        
+        .black-key .label {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        /* Penempatan tombol hitam */
+        .black-key:nth-child(1) { left: 8%; }   /* C# */
+        .black-key:nth-child(2) { left: 19%; }  /* D# */
+        .black-key:nth-child(3) { left: 41%; }  /* F# */
+        .black-key:nth-child(4) { left: 52%; }  /* G# */
+        .black-key:nth-child(5) { left: 63%; }  /* A# */
+        .black-key:nth-child(6) { left: 85%; }  /* C# */
+        .black-key:nth-child(7) { left: 96%; }  /* D# */
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 50px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff7e5f;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .song-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .song-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .song-btn:hover {
+            background: rgba(255,126,95,0.3);
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #ff7e5f;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            color: #a0a0c0;
+        }
+        
+        .start-button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: transform 0.3s;
+        }
+        
+        .start-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .keyboard-hint {
+            color: #a0a0c0;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .keyboard {
+                height: 200px;
+            }
+            
+            .white-key .label {
+                font-size: 0.9rem;
+                bottom: 10px;
+            }
+            
+            .black-key .label {
+                font-size: 0.7rem;
+                bottom: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 Piano Virtual Interaktif</h1>
+        <p class="subtitle">Klik tuts atau gunakan keyboard untuk memainkan nada!</p>
+        
+        <button class="start-button" id="start-btn">🔊 Klik untuk Mulai Bermain</button>
+        
+        <div class="piano-container">
+            <div class="keyboard">
+                <div class="white-keys" id="whiteKeys">
+                    <!-- Tuts putih akan dibuat dengan JavaScript -->
+                </div>
+                <div class="black-keys" id="blackKeys">
+                    <!-- Tuts hitam akan dibuat dengan JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="volume-control">
+            <span>🔉</span>
+            <input type="range" min="0" max="100" value="70" class="volume-slider" id="volumeSlider">
+            <span>🔊</span>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="pianoBtn">🎹 Piano</button>
+            <button class="control-btn" id="guitarBtn">🎸 Gitar</button>
+            <button class="control-btn" id="stringsBtn">🎻 Strings</button>
+            <button class="control-btn" id="synthBtn">🎛️ Synth</button>
+        </div>
+        
+        <div class="song-buttons">
+            <button class="song-btn" data-song="twinkle">✨ Twinkle Twinkle</button>
+            <button class="song-btn" data-song="birthday">🎂 Happy Birthday</button>
+            <button class="song-btn" data-song="jingle">🔔 Jingle Bells</button>
+            <button class="song-btn" data-song="scale">🎵 Tangga Nada</button>
+        </div>
+        
+        <div class="keyboard-hint">
+            <p>💡 Gunakan keyboard: A S D F G H J (putih) dan W E T Y U (hitam)</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>Cara Bermain:</h3>
+            <ul>
+                <li>Klik tombol "Klik untuk Mulai Bermain" di atas untuk mengaktifkan suara</li>
+                <li>Klik langsung pada tuts piano di atas untuk memainkan nada</li>
+                <li>Gunakan keyboard komputer: A-S-D-F-G-H-J untuk tuts putih, W-E-T-Y-U untuk tuts hitam</li>
+                <li>Pilih instrumen berbeda untuk variasi suara</li>
+                <li>Coba mainkan lagu-lagu sederhana dengan tombol lagu</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi variabel
+        let audioContext;
+        let isAudioStarted = false;
+        let volume = 0.7;
+        let currentInstrument = 'piano';
+        
+        // Data nada piano (oktaf ke-4)
+        const notes = {
+            white: [
+                { note: 'C', freq: 261.63, key: 'A' },
+                { note: 'D', freq: 293.66, key: 'S' },
+                { note: 'E', freq: 329.63, key: 'D' },
+                { note: 'F', freq: 349.23, key: 'F' },
+                { note: 'G', freq: 392.00, key: 'G' },
+                { note: 'A', freq: 440.00, key: 'H' },
+                { note: 'B', freq: 493.88, key: 'J' }
+            ],
+            black: [
+                { note: 'C#', freq: 277.18, key: 'W' },
+                { note: 'D#', freq: 311.13, key: 'E' },
+                { note: 'F#', freq: 369.99, key: 'T' },
+                { note: 'G#', freq: 415.30, key: 'Y' },
+                { note: 'A#', freq: 466.16, key: 'U' }
+            ]
+        };
+
+        // Elemen DOM
+        const startBtn = document.getElementById('start-btn');
+        const whiteKeysContainer = document.getElementById('whiteKeys');
+        const blackKeysContainer = document.getElementById('blackKeys');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const pianoBtn = document.getElementById('pianoBtn');
+        const guitarBtn = document.getElementById('guitarBtn');
+        const stringsBtn = document.getElementById('stringsBtn');
+        const synthBtn = document.getElementById('synthBtn');
+        const songBtns = document.querySelectorAll('.song-btn');
+
+        // Fungsi untuk memulai audio context
+        function startAudio() {
+            if (!isAudioStarted) {
+                // Buat audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                isAudioStarted = true;
+                
+                // Buat piano
+                createPiano();
+                
+                // Update tombol start
+                startBtn.textContent = '🎵 Piano Siap Dimainkan!';
+                startBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)';
+                
+                // Mainkan nada demo
+                setTimeout(() => playNote(notes.white[0].freq, 'white'), 300);
+                setTimeout(() => playNote(notes.white[2].freq, 'white'), 600);
+                setTimeout(() => playNote(notes.white[4].freq, 'white'), 900);
+            }
+        }
+
+        // Fungsi untuk membuat piano
+        function createPiano() {
+            // Buat tuts putih
+            notes.white.forEach(note => {
+                const key = document.createElement('div');
+                key.className = 'white-key';
+                key.innerHTML = `<div class="label">${note.note}<br><small>${note.key}</small></div>`;
+                
+                // Event listeners untuk mouse
+                key.addEventListener('mousedown', () => playNote(note.freq, 'white', note.note));
+                key.addEventListener('mouseup', () => removeActiveClass(key));
+                key.addEventListener('mouseleave', () => removeActiveClass(key));
+                
+                // Event listeners untuk touch (mobile)
+                key.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    playNote(note.freq, 'white', note.note);
+                    key.classList.add('active');
+                });
+                
+                key.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    removeActiveClass(key);
+                });
+                
+                whiteKeysContainer.appendChild(key);
+            });
+
+            // Buat tuts hitam
+            notes.black.forEach(note => {
+                const key = document.createElement('div');
+                key.className = 'black-key';
+                key.innerHTML = `<div class="label">${note.note}<br><small>${note.key}</small></div>`;
+                
+                // Event listeners untuk mouse
+                key.addEventListener('mousedown', () => playNote(note.freq, 'black', note.note));
+                key.addEventListener('mouseup', () => removeActiveClass(key));
+                key.addEventListener('mouseleave', () => removeActiveClass(key));
+                
+                // Event listeners untuk touch (mobile)
+                key.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    playNote(note.freq, 'black', note.note);
+                    key.classList.add('active');
+                });
+                
+                key.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    removeActiveClass(key);
+                });
+                
+                blackKeysContainer.appendChild(key);
+            });
+        }
+
+        // Fungsi untuk memainkan nada
+        function playNote(frequency, keyType, noteName = '') {
+            if (!isAudioStarted || !audioContext) return;
+            
+            // Buat osilator
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Konfigurasi berdasarkan instrumen
+            configureInstrument(oscillator, frequency);
+            
+            // Atur volume
+            gainNode.gain.value = volume;
+            
+            // Hubungkan node
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Atur envelope (attack, decay, release)
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1);
+            
+            // Mulai dan hentikan osilator
+            oscillator.start(now);
+            oscillator.stop(now + 1);
+            
+            // Highlight tuts yang ditekan
+            highlightKey(noteName || frequency.toString(), keyType);
+        }
+
+        // Fungsi untuk mengkonfigurasi suara berdasarkan instrumen
+        function configureInstrument(oscillator, frequency) {
+            oscillator.frequency.value = frequency;
+            
+            switch(currentInstrument) {
+                case 'piano':
+                    oscillator.type = 'triangle';
+                    break;
+                case 'guitar':
+                    oscillator.type = 'sawtooth';
+                    // Tambah efek detune kecil untuk suara gitar
+                    oscillator.detune.value = Math.random() * 10 - 5;
+                    break;
+                case 'strings':
+                    oscillator.type = 'sine';
+                    // Tambah efek vibrato
+                    const vibrato = audioContext.createOscillator();
+                    const vibratoGain = audioContext.createGain();
+                    vibrato.frequency.value = 5;
+                    vibratoGain.gain.value = 10;
+                    vibrato.connect(vibratoGain);
+                    vibratoGain.connect(oscillator.detune);
+                    vibrato.start();
+                    vibrato.stop(audioContext.currentTime + 1);
+                    break;
+                case 'synth':
+                    oscillator.type = 'square';
+                    break;
+            }
+        }
+
+        // Fungsi untuk highlight tuts yang ditekan
+        function highlightKey(noteId, keyType) {
+            let keyElement;
+            
+            if (keyType === 'white') {
+                const keys = document.querySelectorAll('.white-key');
+                keys.forEach(key => {
+                    if (key.querySelector('.label').textContent.includes(noteId)) {
+                        keyElement = key;
+                    }
+                });
+            } else {
+                const keys = document.querySelectorAll('.black-key');
+                keys.forEach(key => {
+                    if (key.querySelector('.label').textContent.includes(noteId)) {
+                        keyElement = key;
+                    }
+                });
+            }
+            
+            if (keyElement) {
+                keyElement.classList.add('active');
+                setTimeout(() => {
+                    keyElement.classList.remove('active');
+                }, 300);
+            }
+        }
+
+        // Fungsi untuk menghapus kelas active
+        function removeActiveClass(element) {
+            element.classList.remove('active');
+        }
+
+        // Event listener untuk tombol start
+        startBtn.addEventListener('click', startAudio);
+        
+        // Event listener untuk keyboard komputer
+        document.addEventListener('keydown', (e) => {
+            if (!isAudioStarted) return;
+            
+            const key = e.key.toUpperCase();
+            
+            // Cari tuts putih yang sesuai
+            const whiteNote = notes.white.find(note => note.key === key);
+            if (whiteNote) {
+                playNote(whiteNote.freq, 'white', whiteNote.note);
+                return;
+            }
+            
+            // Cari tuts hitam yang sesuai
+            const blackNote = notes.black.find(note => note.key === key);
+            if (blackNote) {
+                playNote(blackNote.freq, 'black', blackNote.note);
+            }
+        });
+
+        // Event listener untuk volume
+        volumeSlider.addEventListener('input', (e) => {
+            volume = e.target.value / 100;
+        });
+
+        // Event listener untuk pilih instrumen
+        pianoBtn.addEventListener('click', () => {
+            currentInstrument = 'piano';
+            updateInstrumentButtons();
+        });
+        
+        guitarBtn.addEventListener('click', () => {
+            currentInstrument = 'guitar';
+            updateInstrumentButtons();
+        });
+        
+        stringsBtn.addEventListener('click'
